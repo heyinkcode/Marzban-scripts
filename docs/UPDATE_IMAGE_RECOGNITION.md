@@ -1,0 +1,44 @@
+# 更新时误报官方镜像
+
+变更MR-20261015-UPDATE-RECOGNITION；当前本地修复、Linux云端回归及正式发布待完成。脚本运行时代码变化；Marzban与Node镜像、HTTP API、REST/RPyC、设备策略、数据库、证书、端口、.env、数据卷及固定Xray v26.3.27均无变化，不需要重新构建业务镜像。
+
+## 原因
+
+旧marzban-node update与marzban update把「yq不存在」和「Compose镜像不是Fork」合并成同一个分支。因此已经使用ghcr.io/kissow镜像，但未安装yq或装了不兼容yq的主机，会被错误要求adopt；成功更新的主机可能恰好具备兼容yq。截图符合这个确定存在的代码缺陷，但故障机具体环境仍需实际验收。
+
+这不是Node掉线或容器启动失败。status的running仅证明某个容器正在运行，不能证明本次更新成功或镜像revision正确。旧update在guard之前退出，也就不能执行末尾自更新，需要先刷新脚本一次。
+
+## 命令合同
+
+- update的命令名、参数和成功路径保留；先检查原目标服务的Compose实际模型，再执行原备份、拉取、启动和脚本刷新。
+- 只读Docker Compose config的规范输出；它已处理环境变量、.env和YAML合并。只取目标服务的image，不搜索整个文件，不以另一个服务的Fork镜像或当前运行容器兜底。参考[Docker Compose官方合同](https://docs.docker.com/reference/cli/docker/compose/config/)。
+- update不再要求yq。真正修改官方Compose镜像的adopt仍保留原yq要求；没有自动迁移、重装或修改镜像配置。
+- 接受精确Fork仓库的隐式latest、标签、sha256摘要及标签加摘要；不能用相似前缀冒充。保留原标签/摘要，固定摘要不会自动追踪latest。
+- Compose读取失败、目标服务/唯一image缺失、其他自定义镜像分别停止；不会一概称为官方镜像。只有精确识别官方仓库才提示查阅迁移指南。
+- 备份、拉取、刷新脚本任一步失败，返回非零且不报更新成功；即使Bash调用处处于条件表达式，也不能依靠set -e掩盖错误。备份预检/建目录/临时文件/停服/归档/校验/恢复启动失败均中止，已停止服务在归档失败时尝试原配置启动。
+- 控制/API端口、REST证书及数据保持不变，无新监听或依赖；不打印完整解析配置或代理凭据。
+
+## 已切换Fork的服务器
+
+以下是默认命令名。先刷新脚本，不重装Node，不执行adopt：
+
+```sh
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/kissow/Marzban-scripts/master/marzban-node.sh)" @ install-script
+sudo marzban-node update
+sudo marzban-node status
+docker inspect marzban-node --format '{{.Config.Image}} | {{index .Config.Labels "org.opencontainers.image.revision"}}'
+```
+
+自定义命令名例如marzban-node2，刷新时增加--name marzban-node2，随后继续使用该命令；不要换成默认命令而指向另一个安装目录。主控如需刷新，只将脚本URL与命令换成marzban.sh/marzban。正常已更新的容器不必为此次脚本修复再拉镜像；刷新命令可单独执行。
+
+新安装直接使用仓库install，部署同一版识别逻辑。真正官方或自定义镜像不能仅因看见报错就盲目adopt，应先核对配置及备份。
+
+## 检测和验收
+
+Windows固定PowerShell7/项目Python执行静态合同检查，不切换到Bash作为本地命令环境。真实Bash和Docker Compose回归在Ubuntu22.04、24.04各三轮运行；覆盖无yq/不兼容yq、自定义命令名、标签/摘要/引号、官方与其他镜像、相似前缀、缺失/重复字段、多个服务、敏感配置不泄露、失败中止和实际tar归档。实际Compose测试解析.env变量、YAML锚点和数据库依赖，但不启动/拉取业务容器。
+
+这些是隔离回归，不是生产服务器升级验收。正式发布后还需故障Node执行一次刷新和update，确认备份路径、返回码、实际镜像revision、证书端口保留及面板连接正常。不得把status Up或CI成功当成服务器验收。
+
+## 发布证据
+
+待登记源提交、分支与正式Actions、线上脚本字节摘要；本轮不发布Docker镜像。主控和Node业务镜像保持上一次已验证版本。

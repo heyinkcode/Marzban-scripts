@@ -9,7 +9,11 @@ permissions:
 
 jobs:
   shell-syntax:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Check Bash syntax
@@ -20,3 +24,10 @@ jobs:
           grep -q 'ghcr.io/kissow/marzban-node:latest' marzban-node.sh
           grep -q 'FETCH_REPO="kissow/Marzban-scripts"' marzban.sh
           grep -q 'FETCH_REPO="kissow/Marzban-scripts"' marzban-node.sh
+      - name: Verify resolved Compose image and safe update flow, three rounds
+        run: |
+          docker compose version
+          for round in 1 2 3; do
+            echo "Update recognition regression round $round"
+            python3 -m unittest discover -s tests -p 'test_*.py' -v
+          done
