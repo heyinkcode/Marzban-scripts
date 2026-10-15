@@ -1,6 +1,6 @@
 # Mr.shaw Marzban-scripts Fork 更新记录
 
-## MR-20261015-UPDATE-RECOGNITION（开发中）
+## MR-20261015-UPDATE-RECOGNITION（脚本已发布，故障机验收待完成）
 
 修复update因缺少/不兼容yq误报官方镜像；主控和Node使用相同的目标Compose服务只读识别，保留标签、摘要、备份和原安装。识别失败与官方/自定义镜像分开报错，阶段失败明确中止。仅脚本，无业务镜像/API/证书/端口变化；测试与发布见[专页](docs/UPDATE_IMAGE_RECOGNITION.md)。首页只留产品与文档导航，历史维护记录迁入docs。
 

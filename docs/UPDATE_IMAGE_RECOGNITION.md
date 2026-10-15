@@ -1,6 +1,6 @@
 # 更新时误报官方镜像
 
-变更MR-20261015-UPDATE-RECOGNITION；当前本地修复、Linux云端回归及正式发布待完成。脚本运行时代码变化；Marzban与Node镜像、HTTP API、REST/RPyC、设备策略、数据库、证书、端口、.env、数据卷及固定Xray v26.3.27均无变化，不需要重新构建业务镜像。
+变更MR-20261015-UPDATE-RECOGNITION；脚本已合并发布，正式Linux回归及线上脚本字节核对通过，故障服务器验收待完成。脚本运行时代码变化；Marzban与Node镜像、HTTP API、REST/RPyC、设备策略、数据库、证书、端口、.env、数据卷及固定Xray v26.3.27均无变化，不需要重新构建业务镜像。
 
 ## 原因
 
@@ -41,4 +41,17 @@ Windows固定PowerShell7/项目Python执行静态合同检查，不切换到Bash
 
 ## 发布证据
 
-待登记源提交、分支与正式Actions、线上脚本字节摘要；本轮不发布Docker镜像。主控和Node业务镜像保持上一次已验证版本。
+2026-10-15：源提交e881580ea3da2e74542eddb7f6cffe46ff72eff5，经[PR #3](https://github.com/kissow/Marzban-scripts/pull/3)合入a26b6af35785c47cefc7deca78627d8e8262d075。
+
+分支[38692092775](https://github.com/kissow/Marzban-scripts/actions/runs/38692092775)、PR[38692104130](https://github.com/kissow/Marzban-scripts/actions/runs/38692104130)、正式[38692284027](https://github.com/kissow/Marzban-scripts/actions/runs/38692284027)均成功。每次包含Ubuntu22.04/24.04各三轮31/31，无Linux跳过；包含真实Compose展开与tar归档。Windows本地4项静态通过、27项Linux相关明确跳过，不把跳过当本地真实执行。
+
+原始master下载字节与GitHub API对应Git blob及本地源对象核对一致：
+
+| 文件 | Git blob | SHA256 |
+| --- | --- | --- |
+| marzban-node.sh | 1db88a93e65bed3013196c897b73f07c9c1dfec0 | f7cc3c8df0d2ecfb2e9fffe0af7ab180943aeccbb877a8b4029a11349725e07f |
+| marzban.sh | d56f71005962b95c45a713ba33adddf853d9d59f | 7c729715227f62cf01775aaf837d6c932b7b461ec92487de8b3366a57b3884eb |
+
+本轮不发布Docker镜像：主控继续258218c07c9f2e265e790764bd727e528dcb761d、Node继续168a9e63d7c5219dffafd5839876db30b57e3cd5的已验证镜像。用户截图证明主控和一台Node执行更新成功，另一台被旧guard拒绝；没有把这些截图认定为全部业务/客户端验收。故障机须先刷新本地旧命令，再update，核对实际revision及面板连接。
+
+发布前Git fetch出现连接重置，未改变全局TLS/证书；只读API与原始下载校验成功。文档证据仅Markdown [skip ci]回写，不再改动已测试脚本和镜像。完整回归已成为工作流固定门槛，以免缺少yq误判再次出现。
