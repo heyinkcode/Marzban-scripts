@@ -1405,7 +1405,7 @@ backup_before_fork_update() {
         colorized_echo red "Missing compose, .env, or data directory; update aborted."
         return 1
     fi
-    $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" config --quiet
+    $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" config --quiet || return 1
 
     # A remote database is not covered by the local data archive.
     if grep -Eq '^[[:space:]]*SQLALCHEMY_DATABASE_URL[[:space:]]*=.*(mysql|postgresql)' "$ENV_FILE" && \
@@ -1416,23 +1416,23 @@ backup_before_fork_update() {
 
     local backup_dir="$APP_DIR/backup"
     local backup_file
-    mkdir -p -m 700 "$backup_dir"
-    backup_file=$(mktemp "$backup_dir/upgrade-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXXXX.tar.gz")
+    mkdir -p -m 700 "$backup_dir" || return 1
+    backup_file=$(mktemp "$backup_dir/upgrade-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXXXX.tar.gz") || return 1
 
     # Stop SQLite/MySQL/MariaDB cleanly so the data archive is consistent.
-    $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" stop
+    $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" stop || return 1
     if ! tar -czf "$backup_file" -C "$APP_DIR" .env docker-compose.yml \
         -C "$(dirname "$DATA_DIR")" "$(basename "$DATA_DIR")"; then
-        $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" up -d
+        $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" up -d || return 1
         colorized_echo red "Data backup failed; image was not changed."
         return 1
     fi
     if ! tar -tzf "$backup_file" >/dev/null; then
-        $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" up -d
+        $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" up -d || return 1
         colorized_echo red "Backup verification failed; image was not changed."
         return 1
     fi
-    $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" up -d
+    $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" up -d || return 1
     colorized_echo green "Pre-update backup: $backup_file"
 }
 
@@ -1466,6 +1466,65 @@ adopt_command() {
     colorized_echo green "Fork adopted. Future updates use 'marzban update'."
 }
 
+# Read only Docker Compose's resolved model, never raw YAML or a running
+# container. Environment substitutions and anchors have already been resolved.
+configured_service_image() {
+    local service="$1" rendered image
+    if ! rendered=$($COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" config 2>/dev/null); then
+        colorized_echo red "Cannot render Compose configuration; update stopped before backup or image changes." >&2
+        return 1
+    fi
+    if ! image=$(printf '%s\n' "$rendered" | awk -v wanted="$service" '
+        /^services:[[:space:]]*$/ { services = 1; next }
+        services && /^[^[:space:]]/ { services = 0; selected = 0 }
+        services && /^  [^[:space:]]/ {
+            key = $0
+            sub(/^  /, "", key)
+            sub(/:[[:space:]]*$/, "", key)
+            selected = (key == wanted)
+            next
+        }
+        services && selected && /^    image:[[:space:]]*/ {
+            sub(/^    image:[[:space:]]*/, "")
+            sub(/[[:space:]]*$/, "")
+            print
+            count++
+        }
+        END { if (count != 1) exit 1 }
+    '); then
+        colorized_echo red "Cannot identify one image for the target Compose service; update stopped without changes." >&2
+        return 1
+    fi
+    # Canonical Compose YAML may quote image scalars. Image references cannot
+    # contain quotes or escaped characters, so reject those during validation.
+    if [[ "$image" == \"*\" || "$image" == \'*\' ]]; then
+        image="${image:1:${#image}-2}"
+    fi
+    printf '%s\n' "$image"
+}
+
+image_from_repository() {
+    local image="$1" repository="$2" suffix
+    [[ "$image" == "$repository"* ]] || return 1
+    suffix="${image#"$repository"}"
+    [[ "$suffix" =~ ^(:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(@sha256:[a-f0-9]{64})?$ ]]
+}
+
+require_fork_update_image() {
+    local service="$1" repository="$2" official="$3" image
+    image=$(configured_service_image "$service") || return 1
+    if image_from_repository "$image" "$repository"; then
+        return 0
+    fi
+    if image_from_repository "$image" "$official"; then
+        colorized_echo red "The target Compose service uses the official image. Review the migration guide before running '$APP_NAME adopt' once."
+    else
+        colorized_echo red "The target Compose service does not use this Fork image; update stopped. Review its image configuration; no automatic migration was performed."
+    fi
+    return 1
+}
+
+
 update_command() {
     check_running_as_root
     # Check if marzban is installed
@@ -1475,14 +1534,10 @@ update_command() {
     fi
     
     detect_compose
-    if ! command -v yq >/dev/null 2>&1 || \
-       [[ "$(yq e '.services.marzban.image' "$COMPOSE_FILE")" != ghcr.io/kissow/marzban:* ]]; then
-        colorized_echo red "This installation still uses the official image. Run 'marzban adopt' once."
-        return 1
-    fi
-    backup_before_fork_update
-    pull_fork_image
-    update_marzban_script
+    require_fork_update_image "marzban" "ghcr.io/kissow/marzban" "ghcr.io/gozargah/marzban" || return 1
+    backup_before_fork_update || return 1
+    pull_fork_image || return 1
+    update_marzban_script || return 1
     colorized_echo green "Marzban fork updated successfully; existing data and .env were kept."
 }
 
@@ -1491,13 +1546,13 @@ update_marzban_script() {
     SCRIPT_URL="https://raw.githubusercontent.com/$FETCH_REPO/master/marzban.sh"
     colorized_echo blue "Updating marzban script"
     local script_file
-    script_file=$(mktemp)
+    script_file=$(mktemp) || return 1
     if ! curl -fsSL "$SCRIPT_URL" -o "$script_file"; then
         rm -f "$script_file"
         colorized_echo red "Unable to fetch the Mr.shaw Marzban script."
         return 1
     fi
-    install -m 755 "$script_file" /usr/local/bin/marzban
+    install -m 755 "$script_file" /usr/local/bin/marzban || { rm -f "$script_file"; return 1; }
     rm -f "$script_file"
     colorized_echo green "marzban script updated successfully"
 }

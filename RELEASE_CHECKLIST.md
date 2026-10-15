@@ -1,5 +1,15 @@
 # Mr.shaw deployment release checklist
 
+## MR-20261015-UPDATE-RECOGNITION
+
+- [x] 主控/Node更新识别统一，update不依赖yq，数据/证书/端口/标签与摘要保持。
+- [x] 新增静态合同与Linux真实Bash/Compose/tar回归；Windows只运行静态项，明确跳过Linux项。
+- [ ] Ubuntu22.04/24.04各三轮回归及语法检查成功。
+- [ ] 源提交合并、正式Actions与线上脚本SHA256核对。
+- [ ] 故障Node刷新脚本和升级，备份、revision、证书端口及面板连接验收。
+
+仅脚本发布，不重建主控/Node镜像。主页不放检测和发布明细，统一记录到[功能发布专页](docs/UPDATE_IMAGE_RECOGNITION.md)。
+
 ## MR-20261008-NODE-RELAY-SOURCES（镜像已发布，服务器/视觉验收待完成）
 
 连接方式采用原React/Chakra独立管理弹窗和原信息图标。可选择Marzban主服务器或另一台源Node中转到目标Node；保留原订阅别名、顺序、数量，只替换精确匹配的端点，不新增Relay。目标认证、设备凭据和出口不变。自转发/环路/占用/能力/精确ACK/失败回滚、来源隔离与恢复有回归测试。

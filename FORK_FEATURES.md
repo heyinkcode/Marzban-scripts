@@ -1,5 +1,9 @@
 # Mr.shaw 部署脚本 Fork
 
+## 安全更新识别
+
+update按Docker Compose解析后的目标服务镜像检查Fork来源，不依赖yq、不误用其他服务或运行中容器的镜像。读取失败明确停止，失败阶段不报成功；已有Fork不重复adopt。合同、边界和发布状态见[更新识别说明](docs/UPDATE_IMAGE_RECOGNITION.md)。
+
 基于 Gozargah/Marzban-scripts 的开源扩展，保留上游历史、作者致谢与许可证。提供 Fork 镜像的一键install、原安装adopt与保留数据update；不使用重装或删卷来更新已有服务器。
 
 ## MR-20261008-NODE-RELAY-SOURCES（镜像已发布，服务器/视觉验收待完成）

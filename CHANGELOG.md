@@ -1,5 +1,9 @@
 # Mr.shaw Marzban-scripts Fork 更新记录
 
+## MR-20261015-UPDATE-RECOGNITION（开发中）
+
+修复update因缺少/不兼容yq误报官方镜像；主控和Node使用相同的目标Compose服务只读识别，保留标签、摘要、备份和原安装。识别失败与官方/自定义镜像分开报错，阶段失败明确中止。仅脚本，无业务镜像/API/证书/端口变化；测试与发布见[专页](docs/UPDATE_IMAGE_RECOGNITION.md)。首页只留产品与文档导航，历史维护记录迁入docs。
+
 ## MR-20261008-NODE-RELAY-SOURCES（镜像已发布，服务器/视觉验收待完成）
 
 连接方式采用原React/Chakra独立管理弹窗和原信息图标。可选择Marzban主服务器或另一台源Node中转到目标Node；保留原订阅别名、顺序、数量，只替换精确匹配的端点，不新增Relay。目标认证、设备凭据和出口不变。自转发/环路/占用/能力/精确ACK/失败回滚、来源隔离与恢复有回归测试。
