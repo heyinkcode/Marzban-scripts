@@ -5,6 +5,7 @@
 - [功能说明](../FORK_FEATURES.md)
 - [更新记录](../CHANGELOG.md)
 - [发布检查清单](../RELEASE_CHECKLIST.md)
+- [按功能查阅历史发布证据](releases/README.md)
 - [历史首页记录](README_RELEASE_HISTORY.md)
 - [配对主控文档](https://github.com/kissow/Marzban/blob/master/docs/README.md)
 - [配对Node文档](https://github.com/kissow/Marzban-node/blob/master/docs/README.md)

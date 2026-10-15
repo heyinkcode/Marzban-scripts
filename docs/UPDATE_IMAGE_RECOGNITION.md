@@ -1,10 +1,10 @@
 # 更新时误报官方镜像
 
-变更MR-20261015-UPDATE-RECOGNITION；脚本已合并发布，正式Linux回归及线上脚本字节核对通过，故障服务器验收待完成。脚本运行时代码变化；Marzban与Node镜像、HTTP API、REST/RPyC、设备策略、数据库、证书、端口、.env、数据卷及固定Xray v26.3.27均无变化，不需要重新构建业务镜像。
+变更MR-20261015-UPDATE-RECOGNITION；脚本已合并发布，正式Linux回归及线上脚本字节核对通过，用户已反馈故障 Node 更新流程测试 OK；该反馈不等于全部业务或客户端验收。脚本运行时代码变化；Marzban与Node镜像、HTTP API、REST/RPyC、设备策略、数据库、证书、端口、.env、数据卷及固定Xray v26.3.27均无变化，不需要重新构建业务镜像。
 
 ## 原因
 
-旧marzban-node update与marzban update把「yq不存在」和「Compose镜像不是Fork」合并成同一个分支。因此已经使用ghcr.io/kissow镜像，但未安装yq或装了不兼容yq的主机，会被错误要求adopt；成功更新的主机可能恰好具备兼容yq。截图符合这个确定存在的代码缺陷，但故障机具体环境仍需实际验收。
+旧marzban-node update与marzban update把「yq不存在」和「Compose镜像不是Fork」合并成同一个分支。因此已经使用ghcr.io/kissow镜像，但未安装yq或装了不兼容yq的主机，会被错误要求adopt；成功更新的主机可能恰好具备兼容yq。截图符合这个确定存在的代码缺陷；用户随后刷新脚本并完成更新，反馈测试 OK，但没有独立读取故障机原 yq 环境。
 
 这不是Node掉线或容器启动失败。status的running仅证明某个容器正在运行，不能证明本次更新成功或镜像revision正确。旧update在guard之前退出，也就不能执行末尾自更新，需要先刷新脚本一次。
 
@@ -37,7 +37,7 @@ docker inspect marzban-node --format '{{.Config.Image}} | {{index .Config.Labels
 
 Windows固定PowerShell7/项目Python执行静态合同检查，不切换到Bash作为本地命令环境。真实Bash和Docker Compose回归在Ubuntu22.04、24.04各三轮运行；覆盖无yq/不兼容yq、自定义命令名、标签/摘要/引号、官方与其他镜像、相似前缀、缺失/重复字段、多个服务、敏感配置不泄露、失败中止和实际tar归档。实际Compose测试解析.env变量、YAML锚点和数据库依赖，但不启动/拉取业务容器。
 
-这些是隔离回归，不是生产服务器升级验收。正式发布后还需故障Node执行一次刷新和update，确认备份路径、返回码、实际镜像revision、证书端口保留及面板连接正常。不得把status Up或CI成功当成服务器验收。
+这些是隔离回归。2026-10-15 用户提供故障 Node 刷新旧脚本、备份、拉取 Fork 镜像和启动成功的截图，并反馈“测试 OK”；据此确认用户已验收该更新流程。未由本次工作独立 SSH 核对实际 revision、证书端口及全部业务链路，不把 status Up 或这次反馈扩大为所有客户端、供应商和出口的验收。
 
 ## 发布证据
 
@@ -52,6 +52,6 @@ Windows固定PowerShell7/项目Python执行静态合同检查，不切换到Bash
 | marzban-node.sh | 1db88a93e65bed3013196c897b73f07c9c1dfec0 | f7cc3c8df0d2ecfb2e9fffe0af7ab180943aeccbb877a8b4029a11349725e07f |
 | marzban.sh | d56f71005962b95c45a713ba33adddf853d9d59f | 7c729715227f62cf01775aaf837d6c932b7b461ec92487de8b3366a57b3884eb |
 
-本轮不发布Docker镜像：主控继续258218c07c9f2e265e790764bd727e528dcb761d、Node继续168a9e63d7c5219dffafd5839876db30b57e3cd5的已验证镜像。用户截图证明主控和一台Node执行更新成功，另一台被旧guard拒绝；没有把这些截图认定为全部业务/客户端验收。故障机须先刷新本地旧命令，再update，核对实际revision及面板连接。
+此次脚本修复不发布 Docker 镜像。脚本修复发布时的主控镜像为258218c07c9f2e265e790764bd727e528dcb761d、Node 为 168a9e63d7c5219dffafd5839876db30b57e3cd5；这是当时版本快照，不代表之后的 latest。用户截图证明主控和一台Node执行更新成功，另一台被旧guard拒绝；没有把这些截图认定为全部业务/客户端验收。故障机随后刷新本地旧命令并成功 update，用户已确认该更新流程测试 OK；业务出口与新功能需分别验收。
 
 发布前Git fetch出现连接重置，未改变全局TLS/证书；只读API与原始下载校验成功。文档证据仅Markdown [skip ci]回写，不再改动已测试脚本和镜像。完整回归已成为工作流固定门槛，以免缺少yq误判再次出现。
