@@ -4,8 +4,8 @@
 
 - [x] 主控/Node更新识别统一，update不依赖yq，数据/证书/端口/标签与摘要保持。
 - [x] 新增静态合同与Linux真实Bash/Compose/tar回归；Windows只运行静态项，明确跳过Linux项。
-- [ ] Ubuntu22.04/24.04各三轮回归及语法检查成功。
-- [ ] 源提交合并、正式Actions与线上脚本SHA256核对。
+- [x] Ubuntu22.04/24.04各三轮31/31回归、真实Compose/tar与语法检查成功；分支38692092775、PR38692104130、正式38692284027成功。
+- [x] PR3源e881580e合入a26b6af3，原始master脚本与Git blob及SHA256核对；完整摘要见专页。
 - [ ] 故障Node刷新脚本和升级，备份、revision、证书端口及面板连接验收。
 
 仅脚本发布，不重建主控/Node镜像。主页不放检测和发布明细，统一记录到[功能发布专页](docs/UPDATE_IMAGE_RECOGNITION.md)。
