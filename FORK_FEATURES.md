@@ -10,3 +10,5 @@
 出口、检测、中转和使用系数由配对[主控](https://github.com/kissow/Marzban/blob/master/docs/README.md)及[Node](https://github.com/kissow/Marzban-node/blob/master/docs/README.md)实现，不由脚本搬运用户流量。是否需要更新某台 Node，以相应功能的能力要求为准。
 
 [更新摘要](CHANGELOG.md) · [发布检查](RELEASE_CHECKLIST.md) · [历史证据](docs/releases/README.md)
+
+使用与协议说明见[文档中心](docs/README.md)，旧阶段测试和发布证据见[对应历史索引](docs/releases/README.md)；文档整理不改变运行时。

@@ -1,12 +1,8 @@
-# 更新时误报官方镜像
+# 更新时误报官方镜像的处理
 
-变更MR-20261015-UPDATE-RECOGNITION；脚本已合并发布，正式Linux回归及线上脚本字节核对通过，用户已反馈故障 Node 更新流程测试 OK；该反馈不等于全部业务或客户端验收。脚本运行时代码变化；Marzban与Node镜像、HTTP API、REST/RPyC、设备策略、数据库、证书、端口、.env、数据卷及固定Xray v26.3.27均无变化，不需要重新构建业务镜像。
+已使用 ghcr.io/kissow 镜像，却被旧 update 命令要求 adopt 时，先核对目标服务的 Compose 镜像。旧脚本曾将缺少/不兼容 yq 与非 Fork 镜像混为一类；刷新本机命令可取得修复，不要对已切换 Fork 的安装重复迁移。
 
-## 原因
-
-旧marzban-node update与marzban update把「yq不存在」和「Compose镜像不是Fork」合并成同一个分支。因此已经使用ghcr.io/kissow镜像，但未安装yq或装了不兼容yq的主机，会被错误要求adopt；成功更新的主机可能恰好具备兼容yq。截图符合这个确定存在的代码缺陷；用户随后刷新脚本并完成更新，反馈测试 OK，但没有独立读取故障机原 yq 环境。
-
-这不是Node掉线或容器启动失败。status的running仅证明某个容器正在运行，不能证明本次更新成功或镜像revision正确。旧update在guard之前退出，也就不能执行末尾自更新，需要先刷新脚本一次。
+容器 running 只证明容器在运行，不能证明本次更新已执行或镜像版本正确。旧命令在更新前退出，无法完成末尾的脚本自更新，因此需要先单独刷新脚本。
 
 ## 命令合同
 
@@ -33,25 +29,10 @@ docker inspect marzban-node --format '{{.Config.Image}} | {{index .Config.Labels
 
 新安装直接使用仓库install，部署同一版识别逻辑。真正官方或自定义镜像不能仅因看见报错就盲目adopt，应先核对配置及备份。
 
-## 检测和验收
+## 更新结果检查
 
-Windows固定PowerShell7/项目Python执行静态合同检查，不切换到Bash作为本地命令环境。真实Bash和Docker Compose回归在Ubuntu22.04、24.04各三轮运行；覆盖无yq/不兼容yq、自定义命令名、标签/摘要/引号、官方与其他镜像、相似前缀、缺失/重复字段、多个服务、敏感配置不泄露、失败中止和实际tar归档。实际Compose测试解析.env变量、YAML锚点和数据库依赖，但不启动/拉取业务容器。
+确认升级前备份路径和命令返回码，再核对目标容器的实际镜像及 OCI revision、证书/端口保留和面板连接。固定标签或摘要不会自动跟随 latest；自定义实例须继续使用原命令名和目录。
 
-这些是隔离回归。2026-10-15 用户提供故障 Node 刷新旧脚本、备份、拉取 Fork 镜像和启动成功的截图，并反馈“测试 OK”；据此确认用户已验收该更新流程。未由本次工作独立 SSH 核对实际 revision、证书端口及全部业务链路，不把 status Up 或这次反馈扩大为所有客户端、供应商和出口的验收。
+用户已反馈故障 Node 刷新脚本和更新流程测试 OK；该结果仅确认此次更新流程，不代替出口、订阅和客户端验收。新功能仍按对应文档检查实际链路。
 
-## 发布证据
-
-2026-10-15：源提交e881580ea3da2e74542eddb7f6cffe46ff72eff5，经[PR #3](https://github.com/kissow/Marzban-scripts/pull/3)合入a26b6af35785c47cefc7deca78627d8e8262d075。
-
-分支[38692092775](https://github.com/kissow/Marzban-scripts/actions/runs/38692092775)、PR[38692104130](https://github.com/kissow/Marzban-scripts/actions/runs/38692104130)、正式[38692284027](https://github.com/kissow/Marzban-scripts/actions/runs/38692284027)均成功。每次包含Ubuntu22.04/24.04各三轮31/31，无Linux跳过；包含真实Compose展开与tar归档。Windows本地4项静态通过、27项Linux相关明确跳过，不把跳过当本地真实执行。
-
-原始master下载字节与GitHub API对应Git blob及本地源对象核对一致：
-
-| 文件 | Git blob | SHA256 |
-| --- | --- | --- |
-| marzban-node.sh | 1db88a93e65bed3013196c897b73f07c9c1dfec0 | f7cc3c8df0d2ecfb2e9fffe0af7ab180943aeccbb877a8b4029a11349725e07f |
-| marzban.sh | d56f71005962b95c45a713ba33adddf853d9d59f | 7c729715227f62cf01775aaf837d6c932b7b461ec92487de8b3366a57b3884eb |
-
-此次脚本修复不发布 Docker 镜像。脚本修复发布时的主控镜像为258218c07c9f2e265e790764bd727e528dcb761d、Node 为 168a9e63d7c5219dffafd5839876db30b57e3cd5；这是当时版本快照，不代表之后的 latest。用户截图证明主控和一台Node执行更新成功，另一台被旧guard拒绝；没有把这些截图认定为全部业务/客户端验收。故障机随后刷新本地旧命令并成功 update，用户已确认该更新流程测试 OK；业务出口与新功能需分别验收。
-
-发布前Git fetch出现连接重置，未改变全局TLS/证书；只读API与原始下载校验成功。文档证据仅Markdown [skip ci]回写，不再改动已测试脚本和镜像。完整回归已成为工作流固定门槛，以免缺少yq误判再次出现。
+[历史回归、发布与用户反馈](releases/update-image-recognition-guide-20261015.md) · [安装与保留数据更新](../README.md)

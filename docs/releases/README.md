@@ -11,3 +11,9 @@
 | 更新镜像识别 | [说明](../UPDATE_IMAGE_RECOGNITION.md) | [发布历史](update-recognition.md) |
 
 历史首页快照单独保留在[旧首页归档](../README_RELEASE_HISTORY.md)，不再追加新记录。新更新在对应功能专页维护，CHANGELOG只保留一句摘要和链接。
+
+## 旧功能说明快照
+
+以下原文完整保留拆分前的使用、测试和发布内容；当前行为以每份快照顶部的当前说明为准。
+
+- [更新时误报官方镜像](update-image-recognition-guide-20261015.md)
