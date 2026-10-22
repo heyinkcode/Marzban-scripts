@@ -1,5 +1,7 @@
 # 部署脚本发布检查清单
 
+- [ ] 新脚本/镜像匿名可取；旧 latest、固定摘要拒绝、备份和失败回退三轮 Linux 验证通过。[迁移合同](docs/GITHUB_NAMESPACE_MIGRATION.md)
+
 - [ ] 现行说明无失效开发状态或旧接口行为；历史全文、来源及有效链接保留，旧摘要明确为日期快照。
 
 每次从未勾选模板开始，实际结果写入对应功能专页；[历史清单](docs/releases/README.md)只作历史证据。
@@ -15,4 +17,4 @@
 - [ ] 实际故障机升级、备份和业务范围已验收；容器 Up 不等于全部通过。
 - [ ] 功能文档、CHANGELOG 摘要与索引同步；纯文档不触发业务镜像重建。
 
-[更新识别修复与已知边界](docs/UPDATE_IMAGE_RECOGNITION.md) · [跨仓库发布流程](https://github.com/kissow/Marzban/blob/master/docs/REPOSITORY_UPDATE_FLOW.md)
+[更新识别修复与已知边界](docs/UPDATE_IMAGE_RECOGNITION.md) · [跨仓库发布流程](https://github.com/heyinkcode/Marzban/blob/master/docs/REPOSITORY_UPDATE_FLOW.md)

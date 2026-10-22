@@ -61,7 +61,7 @@ COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 # is still possible for an isolated test, but production must use this pin.
 XRAY_CORE_VERSION="${XRAY_CORE_VERSION:-v26.3.27}"
 CERT_FILE="$DATA_DIR/cert.pem"
-FETCH_REPO="kissow/Marzban-scripts"
+FETCH_REPO="heyinkcode/Marzban-scripts"
 SCRIPT_URL="https://raw.githubusercontent.com/$FETCH_REPO/master/marzban-node.sh"
 
 colorized_echo() {
@@ -310,7 +310,7 @@ install_marzban_node() {
 services:
   marzban-node:
     container_name: $APP_NAME
-    image: ghcr.io/kissow/marzban-node:latest
+    image: ghcr.io/heyinkcode/marzban-node:latest
     restart: always
     network_mode: host
     environment:
@@ -709,7 +709,7 @@ adopt_command() {
     backup_before_fork_update
     local compose_copy="$APP_DIR/backup/docker-compose-before-fork-$(date -u +%Y%m%dT%H%M%SZ).yml"
     cp -a "$COMPOSE_FILE" "$compose_copy"
-    yq -i '.services."marzban-node".image = "ghcr.io/kissow/marzban-node:latest"' "$COMPOSE_FILE"
+    yq -i '.services."marzban-node".image = "ghcr.io/heyinkcode/marzban-node:latest"' "$COMPOSE_FILE"
     if ! $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" config --quiet || ! pull_fork_image; then
         cp -a "$compose_copy" "$COMPOSE_FILE"
         $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" up -d
@@ -765,10 +765,19 @@ image_from_repository() {
 }
 
 require_fork_update_image() {
-    local service="$1" repository="$2" official="$3" image
+    local service="$1" repository="$2" official="$3" legacy="$4" image
+    FORK_NAMESPACE_IMAGE=""
     image=$(configured_service_image "$service") || return 1
     if image_from_repository "$image" "$repository"; then
         return 0
+    fi
+    if image_from_repository "$image" "$legacy"; then
+        if [[ "$image" == "$legacy" || "$image" == "$legacy:latest" ]]; then
+            FORK_NAMESPACE_IMAGE="$repository:latest"
+            return 0
+        fi
+        colorized_echo red "Legacy Fork uses a fixed tag/digest. Select and verify a matching heyinkcode artifact explicitly; automatic latest migration was refused."
+        return 1
     fi
     if image_from_repository "$image" "$official"; then
         colorized_echo red "The target Compose service uses the official image. Review the migration guide before running '$APP_NAME adopt' once."
@@ -776,6 +785,80 @@ require_fork_update_image() {
         colorized_echo red "The target Compose service does not use this Fork image; update stopped. Review its image configuration; no automatic migration was performed."
     fi
     return 1
+}
+
+# Replace only one service image in block-style YAML. Rendered-model comparison
+# below rejects unsupported layouts or any accidental change to another field.
+rewrite_service_image() {
+    local service="$1" image="$2"
+    awk -v wanted="$service" -v replacement="$image" '
+        function finish() {
+            if (selected && !images) print "    image: " replacement
+            selected = 0
+        }
+        /^services:[[:space:]]*(#.*)?$/ { services = 1; print; next }
+        services && /^[^[:space:]#]/ { finish(); services = 0 }
+        services && /^  [^[:space:]#]/ {
+            finish()
+            key = $0
+            sub(/^  /, "", key)
+            sub(/:[[:space:]]*(#.*)?$/, "", key)
+            if (substr(key, 1, 1) == sprintf("%c", 34) || substr(key, 1, 1) == sprintf("%c", 39))
+                key = substr(key, 2, length(key) - 2)
+            selected = (key == wanted)
+            if (selected) { targets++; images = 0 }
+        }
+        services && selected && /^    image:[[:space:]]*/ {
+            images++; total_images++
+            print "    image: " replacement
+            next
+        }
+        { print }
+        END { finish(); if (targets != 1 || total_images > 1) exit 1 }
+    '
+}
+
+migrate_fork_namespace() {
+    local service="$1" image="$2" candidate expected actual original
+    if [ -L "$COMPOSE_FILE" ]; then
+        colorized_echo red "Symlink Compose requires an explicit namespace migration; nothing changed."
+        return 1
+    fi
+    candidate=$(mktemp "$APP_DIR/.owner-compose-XXXXXXXX.yml") || return 1
+    expected=$(mktemp "$APP_DIR/.owner-expected-XXXXXXXX") || { rm -f "$candidate"; return 1; }
+    actual=$(mktemp "$APP_DIR/.owner-actual-XXXXXXXX") || { rm -f "$candidate" "$expected"; return 1; }
+    original=$(mktemp "$APP_DIR/backup/namespace-compose-XXXXXXXX.yml") || { rm -f "$candidate" "$expected" "$actual"; return 1; }
+    if ! cp -p "$COMPOSE_FILE" "$original" ||
+       ! rewrite_service_image "$service" "$image" < "$original" > "$candidate" ||
+       ! $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" config > "$actual" 2>/dev/null ||
+       ! rewrite_service_image "$service" "$image" < "$actual" > "$expected" ||
+       ! $COMPOSE -f "$candidate" -p "$APP_NAME" config > "$actual" 2>/dev/null ||
+       ! cmp -s "$expected" "$actual"; then
+        rm -f "$candidate" "$expected" "$actual"
+        colorized_echo red "Cannot prove an image-only namespace change; original Compose was kept."
+        return 1
+    fi
+    rm -f "$expected" "$actual"
+    # Fetch before replacing Compose. A registry/network failure keeps the old
+    # namespace and running container intact after the normal pre-update backup.
+    if ! $COMPOSE -f "$candidate" -p "$APP_NAME" pull "$service" ||
+       ! cmp -s "$original" "$COMPOSE_FILE" ||
+       ! chmod --reference="$COMPOSE_FILE" "$candidate" ||
+       ! chown --reference="$COMPOSE_FILE" "$candidate" ||
+       ! mv -f "$candidate" "$COMPOSE_FILE"; then
+        rm -f "$candidate"
+        colorized_echo red "Namespace preparation failed; no successful migration was reported."
+        return 1
+    fi
+    if ! pull_fork_image; then
+        if cp -p "$original" "$COMPOSE_FILE" && $COMPOSE -f "$COMPOSE_FILE" -p "$APP_NAME" up -d --no-deps "$service"; then
+            colorized_echo red "New namespace failed to start; original Compose and service were restored."
+        else
+            colorized_echo red "Namespace update and recovery failed; inspect the preserved backup before retrying."
+        fi
+        return 1
+    fi
+    colorized_echo green "Image namespace migrated to heyinkcode; original Compose backup: $original"
 }
 
 
@@ -788,9 +871,13 @@ update_command() {
     fi
     
     detect_compose
-    require_fork_update_image "marzban-node" "ghcr.io/kissow/marzban-node" "ghcr.io/gozargah/marzban-node" || return 1
+    require_fork_update_image "marzban-node" "ghcr.io/heyinkcode/marzban-node" "ghcr.io/gozargah/marzban-node" "ghcr.io/kissow/marzban-node" || return 1
     backup_before_fork_update || return 1
-    pull_fork_image || return 1
+    if [ -n "$FORK_NAMESPACE_IMAGE" ]; then
+        migrate_fork_namespace "marzban-node" "$FORK_NAMESPACE_IMAGE" || return 1
+    else
+        pull_fork_image || return 1
+    fi
     update_marzban_node_script || return 1
     colorized_echo green "Marzban-Node Fork updated successfully; existing certificates were kept."
 }

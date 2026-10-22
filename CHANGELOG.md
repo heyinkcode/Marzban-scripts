@@ -1,5 +1,9 @@
 # 部署脚本更新摘要
 
+## 2026-10-23
+
+- 同步 heyinkcode 分发入口；旧 Fork latest 在备份和模型等价检查后迁移，保留固定版本、数据与失败恢复。[迁移指南](docs/GITHUB_NAMESPACE_MIGRATION.md)
+
 功能说明与测试/发布证据进入对应专页，本页不重复长日志。[历史导航](docs/releases/README.md)
 
 ## 2026-10-16

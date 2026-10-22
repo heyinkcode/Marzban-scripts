@@ -14,11 +14,11 @@
 
 主控revision 93bfbb5b17dd8ee731449976df1a4af4e0f57ca5，Actions37657985804；Node revision 7b45fc0dc3b4451045a06123b52ccdaaa5911b8d，Actions37657976968。scripts合并ed274ba82410f9e6f580cbec59b2a15a89ab81ea，Actions37657994843成功，脚本运行时不变。先在承担来源的Node运行marzban-node update，再在主控运行marzban update；仅作目标的既有配对Node不强制更新。新Node沿用仓库install，现在拉取新latest；旧机不重装、不删卷、不重复adopt。源业务入口TCP需放行，客户端刷新订阅。
 
-[精确配对SHA、index/架构/config摘要、接口与SSH验收证据](https://github.com/kissow/Marzban/blob/master/docs/NODE_RELAY_SOURCES_RELEASE.md)。下方旧记录只描述各自日期的阶段，不代替本轮最新状态；文档[skip ci]提交不改变已核对的运行时镜像revision。
+[精确配对SHA、index/架构/config摘要、接口与SSH验收证据](https://github.com/heyinkcode/Marzban/blob/master/docs/NODE_RELAY_SOURCES_RELEASE.md)。下方旧记录只描述各自日期的阶段，不代替本轮最新状态；文档[skip ci]提交不改变已核对的运行时镜像revision。
 
 
 ## MR-20261003-EGRESS-UDP 配对更新（2026-10-03）
 
 本次脚本运行时代码、install/adopt/update、镜像地址、证书、端口、数据目录与固定 Xray `v26.3.27` 均无变化，无需额外安装软件或开放端口。主面板源提交 `10f46df8e52ad24c79a1d4a1aafc020a7f7ad335`，Node 源提交 `ff3ed8affb43a7c0be84b7404b25ba149cd9c805`；两边新增每 Node UDP 处理合同。只有两个镜像发布证据齐全后才更新：已切换 Fork 的服务器先在每台 Node 执行 `marzban-node update` 并检查状态，再在主面板执行 `marzban update`。本轮不需要重复 adopt，不使用 reinstall，不删除数据卷。
 
-新模式要求 Node 能力 `managed-outbounds-udp-v1`；旧模式 legacy 默认兼容，旧 Node 使用新模式返回主面板 409。TCP-only 仅处理默认 DNS 的 TCP 兼容并阻断其他默认 UDP，不是任意 UDP 转 TCP，也不保证所有手机应用可用。实际供应商 TCP53、v2rayNG/Clash Meta、UI 和服务器仍待验收。完整合同见 [主面板 UDP 文档](https://github.com/kissow/Marzban/blob/master/docs/NODE_EGRESS_UDP.md) 和 [Node 线协议](https://github.com/kissow/Marzban-node/blob/master/docs/egress-udp.md)；发布证据见各仓库 RELEASE_CHECKLIST，不复用历史镜像摘要。
+新模式要求 Node 能力 `managed-outbounds-udp-v1`；旧模式 legacy 默认兼容，旧 Node 使用新模式返回主面板 409。TCP-only 仅处理默认 DNS 的 TCP 兼容并阻断其他默认 UDP，不是任意 UDP 转 TCP，也不保证所有手机应用可用。实际供应商 TCP53、v2rayNG/Clash Meta、UI 和服务器仍待验收。完整合同见 [主面板 UDP 文档](https://github.com/heyinkcode/Marzban/blob/master/docs/NODE_EGRESS_UDP.md) 和 [Node 线协议](https://github.com/heyinkcode/Marzban-node/blob/master/docs/egress-udp.md)；发布证据见各仓库 RELEASE_CHECKLIST，不复用历史镜像摘要。

@@ -1,12 +1,12 @@
 # 出口 UDP 与 DNS：历史发布记录
 
-[当前说明](https://github.com/kissow/Marzban/blob/master/docs/NODE_EGRESS_UDP.md) · [历史索引](README.md)
+[当前说明](https://github.com/heyinkcode/Marzban/blob/master/docs/NODE_EGRESS_UDP.md) · [历史索引](README.md)
 
 本文按功能保留原始发布证据。记录中的「当前」「最新」「未发布」「待验收」仅指原记录形成时的状态，不能替代当前说明或新的验收记录。旧流程和旧接口描述不是现行使用指引；重复正文合并并保留来源。整理日期：2026-10-15。
 
 ## 历史片段 1
 
-原位置：[CHANGELOG.md](https://github.com/kissow/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/CHANGELOG.md)。
+原位置：[CHANGELOG.md](https://github.com/heyinkcode/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/CHANGELOG.md)。
 
 ---
 
@@ -20,15 +20,15 @@
 
 ## 历史片段 2
 
-原位置：[RELEASE_CHECKLIST.md](https://github.com/kissow/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/RELEASE_CHECKLIST.md)。
+原位置：[RELEASE_CHECKLIST.md](https://github.com/heyinkcode/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/RELEASE_CHECKLIST.md)。
 
 ---
 
 ## MR-20261003-EGRESS-UDP (2026-10-03)
 
-- [x] Paired documentation published at scripts revision `23c6dffe006eea30e117ffc86972f5fc94eab33d`; [syntax and Fork target checks](https://github.com/kissow/Marzban-scripts/actions/runs/37119329541) succeeded.
+- [x] Paired documentation published at scripts revision `23c6dffe006eea30e117ffc86972f5fc94eab33d`; [syntax and Fork target checks](https://github.com/heyinkcode/Marzban-scripts/actions/runs/37119329541) succeeded.
 - [x] Scripts runtime unchanged: install/adopt/update, certificates, ports, data paths and pinned Xray `v26.3.27` retained. No scripts image build is required.
-- [x] Panel image source `10f46df8e52ad24c79a1d4a1aafc020a7f7ad335` and Node image source `ff3ed8affb43a7c0be84b7404b25ba149cd9c805` built successfully. Both latest image architectures and OCI revisions verified; see [panel evidence](https://github.com/kissow/Marzban/blob/master/docs/EGRESS_UDP_RELEASE.md) and [Node evidence](https://github.com/kissow/Marzban-node/blob/master/docs/egress-udp-release.md).
+- [x] Panel image source `10f46df8e52ad24c79a1d4a1aafc020a7f7ad335` and Node image source `ff3ed8affb43a7c0be84b7404b25ba149cd9c805` built successfully. Both latest image architectures and OCI revisions verified; see [panel evidence](https://github.com/heyinkcode/Marzban/blob/master/docs/EGRESS_UDP_RELEASE.md) and [Node evidence](https://github.com/heyinkcode/Marzban-node/blob/master/docs/egress-udp-release.md).
 - [x] Existing switched Fork servers use `marzban-node update` first, then `marzban update`; no repeated adopt/reinstall or volume deletion. Back up and verify existing data before updating.
 - [x] Existing egress API paths/authentication retained; optional `udp_mode` and Node capability `managed-outbounds-udp-v1` documented in paired repositories. Old profiles default to legacy; TCP-only is not arbitrary UDP-to-TCP conversion.
 - [ ] Actual server authenticated pairing, provider TCP53, residential exit IP, v2rayNG/Clash Meta behavior and UDP-capable provider regression accepted.
