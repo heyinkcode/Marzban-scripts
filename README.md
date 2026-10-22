@@ -39,13 +39,13 @@ sudo marzban-node update
 
 ## 新服务器
 
-主面板安装命令会从 `kissow/Marzban` 获取 Compose、环境示例和 Xray 示例文件，再启动 Fork 镜像：
+主面板安装命令会从 `heyinkcode/Marzban` 获取 Compose、环境示例和 Xray 示例文件，再启动 Fork 镜像：
 
 ```bash
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/heyinkcode/Marzban-scripts/master/marzban.sh)" @ install
 ```
 
-新 Node 的安装流程继续生成官方方式的连接证书与端口配置，但镜像来自 `kissow/Marzban-node`：
+新 Node 的安装流程继续生成官方方式的连接证书与端口配置，但镜像来自 `heyinkcode/Marzban-node`：
 
 ```bash
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/heyinkcode/Marzban-scripts/master/marzban-node.sh)" @ install
