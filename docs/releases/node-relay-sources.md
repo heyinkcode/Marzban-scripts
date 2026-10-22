@@ -1,12 +1,12 @@
 # Marzban 或 Node 中转到目标 Node：历史发布记录
 
-[当前说明](https://github.com/kissow/Marzban/blob/master/docs/NODE_RELAY_SOURCES.md) · [历史索引](README.md)
+[当前说明](https://github.com/heyinkcode/Marzban/blob/master/docs/NODE_RELAY_SOURCES.md) · [历史索引](README.md)
 
 本文按功能保留原始发布证据。记录中的「当前」「最新」「未发布」「待验收」仅指原记录形成时的状态，不能替代当前说明或新的验收记录。旧流程和旧接口描述不是现行使用指引；重复正文合并并保留来源。整理日期：2026-10-15。
 
 ## 历史片段 1
 
-原位置：[FORK_FEATURES.md](https://github.com/kissow/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/FORK_FEATURES.md)、[CHANGELOG.md](https://github.com/kissow/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/CHANGELOG.md)、[RELEASE_CHECKLIST.md](https://github.com/kissow/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/RELEASE_CHECKLIST.md)。
+原位置：[FORK_FEATURES.md](https://github.com/heyinkcode/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/FORK_FEATURES.md)、[CHANGELOG.md](https://github.com/heyinkcode/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/CHANGELOG.md)、[RELEASE_CHECKLIST.md](https://github.com/heyinkcode/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/RELEASE_CHECKLIST.md)。
 
 ---
 
@@ -20,4 +20,4 @@
 
 主控revision 93bfbb5b17dd8ee731449976df1a4af4e0f57ca5，Actions37657985804；Node revision 7b45fc0dc3b4451045a06123b52ccdaaa5911b8d，Actions37657976968。scripts合并ed274ba82410f9e6f580cbec59b2a15a89ab81ea，Actions37657994843成功，脚本运行时不变。先在承担来源的Node运行marzban-node update，再在主控运行marzban update；仅作目标的既有配对Node不强制更新。新Node沿用仓库install，现在拉取新latest；旧机不重装、不删卷、不重复adopt。源业务入口TCP需放行，客户端刷新订阅。
 
-[精确配对SHA、index/架构/config摘要、接口与SSH验收证据](https://github.com/kissow/Marzban/blob/master/docs/NODE_RELAY_SOURCES_RELEASE.md)。下方旧记录只描述各自日期的阶段，不代替本轮最新状态；文档[skip ci]提交不改变已核对的运行时镜像revision。
+[精确配对SHA、index/架构/config摘要、接口与SSH验收证据](https://github.com/heyinkcode/Marzban/blob/master/docs/NODE_RELAY_SOURCES_RELEASE.md)。下方旧记录只描述各自日期的阶段，不代替本轮最新状态；文档[skip ci]提交不改变已核对的运行时镜像revision。

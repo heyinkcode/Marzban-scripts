@@ -6,7 +6,7 @@
 
 ## 历史片段 1
 
-原位置：[FORK_FEATURES.md](https://github.com/kissow/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/FORK_FEATURES.md)。
+原位置：[FORK_FEATURES.md](https://github.com/heyinkcode/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/FORK_FEATURES.md)。
 
 ---
 
@@ -14,7 +14,7 @@
 
 ## 历史片段 2
 
-原位置：[CHANGELOG.md](https://github.com/kissow/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/CHANGELOG.md)。
+原位置：[CHANGELOG.md](https://github.com/heyinkcode/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/CHANGELOG.md)。
 
 ---
 
@@ -22,7 +22,7 @@
 
 ## 历史片段 3
 
-原位置：[CHANGELOG.md](https://github.com/kissow/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/CHANGELOG.md)。
+原位置：[CHANGELOG.md](https://github.com/heyinkcode/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/CHANGELOG.md)。
 
 ---
 
@@ -38,7 +38,7 @@
 
 ## 历史片段 4
 
-原位置：[RELEASE_CHECKLIST.md](https://github.com/kissow/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/RELEASE_CHECKLIST.md)。
+原位置：[RELEASE_CHECKLIST.md](https://github.com/heyinkcode/Marzban-scripts/blob/21a85bfebbc6be49c8508ef2f35af639ee2cafff/RELEASE_CHECKLIST.md)。
 
 ---
 

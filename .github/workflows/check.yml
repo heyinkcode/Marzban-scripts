@@ -20,10 +20,12 @@ jobs:
         run: bash -n marzban.sh marzban-node.sh install_latest_xray.sh
       - name: Verify Fork image targets
         run: |
-          grep -q 'ghcr.io/kissow/marzban:latest' marzban.sh
-          grep -q 'ghcr.io/kissow/marzban-node:latest' marzban-node.sh
-          grep -q 'FETCH_REPO="kissow/Marzban-scripts"' marzban.sh
-          grep -q 'FETCH_REPO="kissow/Marzban-scripts"' marzban-node.sh
+          grep -q 'ghcr.io/heyinkcode/marzban:latest' marzban.sh
+          grep -q 'ghcr.io/heyinkcode/marzban-node:latest' marzban-node.sh
+          grep -q 'FETCH_REPO="heyinkcode/Marzban-scripts"' marzban.sh
+          grep -q 'FETCH_REPO="heyinkcode/Marzban-scripts"' marzban-node.sh
+          grep -q 'ghcr.io/kissow/marzban" || return 1' marzban.sh
+          grep -q 'ghcr.io/kissow/marzban-node" || return 1' marzban-node.sh
       - name: Verify resolved Compose image and safe update flow, three rounds
         run: |
           docker compose version

@@ -2,7 +2,7 @@
 
 原文截至 2026-10-15，整理于 2026-10-16。下方保留开发阶段、测试及发布证据，不是当前使用指引；其中 latest、未发布、预期 revision 等仅指当时状态。
 
-[当前说明](../UPDATE_IMAGE_RECOGNITION.md) · [历史索引](README.md) · [不可变原文](https://github.com/kissow/Marzban-scripts/blob/c864c5090b9f5582bd208efb2b356d83cf2ba458/docs/UPDATE_IMAGE_RECOGNITION.md)
+[当前说明](../UPDATE_IMAGE_RECOGNITION.md) · [历史索引](README.md) · [不可变原文](https://github.com/heyinkcode/Marzban-scripts/blob/c864c5090b9f5582bd208efb2b356d83cf2ba458/docs/UPDATE_IMAGE_RECOGNITION.md)
 
 ---
 
@@ -31,7 +31,7 @@
 以下是默认命令名。先刷新脚本，不重装Node，不执行adopt：
 
 ```sh
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/kissow/Marzban-scripts/master/marzban-node.sh)" @ install-script
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/heyinkcode/Marzban-scripts/master/marzban-node.sh)" @ install-script
 sudo marzban-node update
 sudo marzban-node status
 docker inspect marzban-node --format '{{.Config.Image}} | {{index .Config.Labels "org.opencontainers.image.revision"}}'
@@ -49,9 +49,9 @@ Windows固定PowerShell7/项目Python执行静态合同检查，不切换到Bash
 
 ## 发布证据
 
-2026-10-15：源提交e881580ea3da2e74542eddb7f6cffe46ff72eff5，经[PR #3](https://github.com/kissow/Marzban-scripts/pull/3)合入a26b6af35785c47cefc7deca78627d8e8262d075。
+2026-10-15：源提交e881580ea3da2e74542eddb7f6cffe46ff72eff5，经[PR #3](https://github.com/heyinkcode/Marzban-scripts/pull/3)合入a26b6af35785c47cefc7deca78627d8e8262d075。
 
-分支[38692092775](https://github.com/kissow/Marzban-scripts/actions/runs/38692092775)、PR[38692104130](https://github.com/kissow/Marzban-scripts/actions/runs/38692104130)、正式[38692284027](https://github.com/kissow/Marzban-scripts/actions/runs/38692284027)均成功。每次包含Ubuntu22.04/24.04各三轮31/31，无Linux跳过；包含真实Compose展开与tar归档。Windows本地4项静态通过、27项Linux相关明确跳过，不把跳过当本地真实执行。
+分支[38692092775](https://github.com/heyinkcode/Marzban-scripts/actions/runs/38692092775)、PR[38692104130](https://github.com/heyinkcode/Marzban-scripts/actions/runs/38692104130)、正式[38692284027](https://github.com/heyinkcode/Marzban-scripts/actions/runs/38692284027)均成功。每次包含Ubuntu22.04/24.04各三轮31/31，无Linux跳过；包含真实Compose展开与tar归档。Windows本地4项静态通过、27项Linux相关明确跳过，不把跳过当本地真实执行。
 
 原始master下载字节与GitHub API对应Git blob及本地源对象核对一致：
 

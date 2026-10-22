@@ -49,6 +49,19 @@ class SourceContractTests(unittest.TestCase):
             self.assertIn("yq is required", body)
             self.assertIn("backup_before_fork_update", body)
 
+    def test_namespace_helpers_are_identical(self):
+        texts = [(ROOT / name).read_text(encoding="utf-8") for name, _, _ in SCRIPTS]
+        for helper in ("rewrite_service_image", "migrate_fork_namespace"):
+            self.assertEqual(function(texts[0], helper), function(texts[1], helper))
+
+    def test_active_downloads_and_images_use_current_owner(self):
+        for name, service, _ in SCRIPTS:
+            text = (ROOT / name).read_text(encoding="utf-8")
+            self.assertIn('FETCH_REPO="heyinkcode/Marzban-scripts"', text)
+            self.assertNotIn('github.com/kissow', text)
+            self.assertIn('ghcr.io/heyinkcode/' + service, text)
+            self.assertIn('"ghcr.io/kissow/' + service + '" || return 1', text)
+
 
 @unittest.skipUnless(sys.platform.startswith("linux"), "Real Bash/Compose runs in Linux CI")
 class BashUpdateTests(unittest.TestCase):
@@ -59,8 +72,8 @@ class BashUpdateTests(unittest.TestCase):
             with self.subTest(script=name), tempfile.TemporaryDirectory() as tmp:
                 text = (ROOT / name).read_text(encoding="utf-8")
                 selected = "unrelated" if service_missing else service
-                value = (image if image is not None else "ghcr.io/kissow/{service}:latest").replace("{service}", service)
-                rendered = ("name: fixture\nservices:\n  decoy:\n    image: ghcr.io/kissow/" + service +
+                value = (image if image is not None else "ghcr.io/heyinkcode/{service}:latest").replace("{service}", service)
+                rendered = ("name: fixture\nservices:\n  decoy:\n    image: ghcr.io/heyinkcode/" + service +
                             ":latest\n  " + selected + ":\n    image: " + value + "\n")
                 if image_line is not None:
                     rendered = rendered.replace("    image: " + value, image_line.replace("{service}", service))
@@ -93,6 +106,7 @@ compose_fixture() {
 }
 backup_before_fork_update() { printf 'BACKUP\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" != BACKUP ]]; }
 pull_fork_image() { printf 'PULL\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" != PULL ]]; }
+migrate_fork_namespace() { printf 'NAMESPACE\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" != NAMESPACE ]] && pull_fork_image; }
 update_marzban_node_script() { printf 'SCRIPT\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" != SCRIPT ]]; }
 update_marzban_script() { printf 'SCRIPT\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" != SCRIPT ]]; }
 '''
@@ -127,6 +141,29 @@ update_marzban_script() { printf 'SCRIPT\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" !=
     def test_fork_without_yq(self):
         self.assert_success()
 
+    def test_legacy_latest_enters_migration_before_pull(self):
+        for result, events in self.run_update(image="ghcr.io/kissow/{service}:latest"):
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(events, ["CONFIG", "BACKUP", "NAMESPACE", "PULL", "SCRIPT"])
+
+    def test_legacy_implicit_latest_enters_migration(self):
+        for result, events in self.run_update(image="ghcr.io/kissow/{service}"):
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("NAMESPACE", events)
+
+    def test_legacy_pins_are_not_silently_changed(self):
+        for suffix in (":stable-1", "@sha256:" + "a" * 64, ":latest@sha256:" + "b" * 64):
+            self.assert_rejected(image="ghcr.io/kissow/{service}" + suffix)
+
+    def test_legacy_prefix_lookalike_is_rejected(self):
+        self.assert_rejected(image="ghcr.io/kissow/{service}-evil:latest")
+
+    def test_namespace_failure_prevents_script_success(self):
+        for result, events in self.run_update(image="ghcr.io/kissow/{service}:latest", fail_stage="NAMESPACE"):
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(events, ["CONFIG", "BACKUP", "NAMESPACE"])
+            self.assertNotIn("updated successfully", result.stdout)
+
     def test_incompatible_yq_is_ignored(self):
         self.assert_success(yq_present=True)
 
@@ -134,7 +171,7 @@ update_marzban_script() { printf 'SCRIPT\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" !=
         self.assert_success(custom_name=False)
 
     def test_custom_tag(self):
-        self.assert_success(image="ghcr.io/kissow/{service}:stable-1")
+        self.assert_success(image="ghcr.io/heyinkcode/{service}:stable-1")
 
     def test_implicit_latest(self):
         self.check_suffix("")
@@ -147,7 +184,7 @@ update_marzban_script() { printf 'SCRIPT\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" !=
 
     def check_suffix(self, suffix):
         for quote in ("", "'", '"'):
-            self.assert_success(image_line="    image: " + quote + "ghcr.io/kissow/{service}" + suffix + quote)
+            self.assert_success(image_line="    image: " + quote + "ghcr.io/heyinkcode/{service}" + suffix + quote)
 
     def test_official_not_silently_adopted(self):
         self.assert_rejected(official=True, image="ghcr.io/gozargah/{service}:latest")
@@ -156,7 +193,7 @@ update_marzban_script() { printf 'SCRIPT\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" !=
         self.assert_rejected(image="ghcr.io/example/custom:latest")
 
     def test_prefix_lookalike_is_rejected(self):
-        self.assert_rejected(image="ghcr.io/kissow/{service}-evil:latest")
+        self.assert_rejected(image="ghcr.io/heyinkcode/{service}-evil:latest")
 
     def test_missing_target_does_not_match_other_service(self):
         self.assert_rejected(service_missing=True)
@@ -171,7 +208,7 @@ update_marzban_script() { printf 'SCRIPT\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" !=
         self.assert_rejected(image_line="    ports: []")
 
     def test_malformed_reference_is_rejected(self):
-        self.assert_rejected(image="ghcr.io/kissow/{service}:bad tag")
+        self.assert_rejected(image="ghcr.io/heyinkcode/{service}:bad tag")
 
     def test_failed_backup_stops_pull(self):
         for result, events in self.run_update(fail_stage="BACKUP"):
@@ -196,7 +233,7 @@ update_marzban_script() { printf 'SCRIPT\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" !=
                 path = Path(tmp) / "compose.yml"
                 path.write_text('x-base: &base\n  image: ${TEST_IMAGE}\nservices:\n  ' + service +
                                 ':\n    <<: *base\n    depends_on: [database]\n  database:\n    image: postgres:16\n')
-                (Path(tmp) / ".env").write_text("TEST_IMAGE=ghcr.io/kissow/" + service + ":stable-1\n")
+                (Path(tmp) / ".env").write_text("TEST_IMAGE=ghcr.io/heyinkcode/" + service + ":stable-1\n")
                 text = (ROOT / name).read_text()
                 program = "set -e\n" + "\n".join(function(text, f) for f in HELPERS)
                 program += '\ncolorized_echo() { printf "%s\\n" "$2"; }\n'
@@ -207,7 +244,7 @@ update_marzban_script() { printf 'SCRIPT\n' >> "$EVENT_LOG"; [[ "$FAIL_STAGE" !=
                 result = subprocess.run([shutil.which("bash"), "-c", program], env=env,
                                         capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(result.stdout.strip(), "ghcr.io/kissow/" + service + ":stable-1")
+                self.assertEqual(result.stdout.strip(), "ghcr.io/heyinkcode/" + service + ":stable-1")
 
 
 @unittest.skipUnless(sys.platform.startswith("linux"), "Real Bash backup flow runs in Linux CI")
