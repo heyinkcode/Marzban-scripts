@@ -1,5 +1,6 @@
 """Real Compose model equivalence and image-only owner migration; no daemon writes."""
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -122,3 +123,55 @@ if migrate_fork_namespace "$SERVICE" "$NEW_IMAGE"; then exit 0; else exit $?; fi
 
     def test_failed_recovery_never_reports_success(self):
         self.exercise(failure="RECOVERY", expected_success=False)
+
+
+@unittest.skipUnless(sys.platform.startswith("linux"), "Documented bootstrap runs in Linux CI")
+class BootstrapCommandTests(unittest.TestCase):
+    def exercise(self, failure=""):
+        guide = (ROOT / "docs/GITHUB_NAMESPACE_MIGRATION.md").read_text()
+        commands = re.findall(r"```sh\n(sudo bash -c [^\n]+)\n```", guide)
+        self.assertEqual(len(commands), 2)
+        for command in commands:
+            with self.subTest(command=command, failure=failure), tempfile.TemporaryDirectory() as tmp:
+                base = Path(tmp)
+                bin_path = base / "bin"
+                bin_path.mkdir()
+                log = base / "events"
+                fixtures = {
+                    "sudo": '#!/bin/bash\nexec "$@"\n',
+                    "curl": r'''#!/bin/bash
+[[ "$FAILURE" != DOWNLOAD ]] || exit 22
+while [[ $# -gt 0 ]]; do
+    if [[ "$1" == -o ]]; then destination="$2"; break; fi
+    shift
+done
+printf '%s\n' '[[ "$1" == install-script ]] || exit 90' 'printf "INSTALL\\n" >> "$EVENT_LOG"' '[[ "$FAILURE" != INSTALL ]] || exit 1' > "$destination"
+''',
+                    "marzban": '#!/bin/bash\nprintf "UPDATE\\n" >> "$EVENT_LOG"\n',
+                    "marzban-node": '#!/bin/bash\nprintf "UPDATE\\n" >> "$EVENT_LOG"\n',
+                }
+                for name, body in fixtures.items():
+                    path = bin_path / name
+                    path.write_text(body)
+                    path.chmod(0o755)
+                env = os.environ.copy()
+                env.update(PATH=str(bin_path) + os.pathsep + env["PATH"], EVENT_LOG=str(log), FAILURE=failure, TMPDIR=tmp)
+                result = subprocess.run([shutil.which("bash"), "--noprofile", "--norc", "-c", command],
+                                        env=env, capture_output=True, text=True, timeout=10)
+                events = log.read_text().splitlines() if log.exists() else []
+                if failure:
+                    self.assertNotEqual(result.returncode, 0, result.stderr)
+                    self.assertNotIn("UPDATE", events)
+                else:
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(events, ["INSTALL", "UPDATE"])
+                self.assertFalse(list(base.glob("tmp.*")))
+
+    def test_exact_documented_commands_refresh_before_update(self):
+        self.exercise()
+
+    def test_download_failure_never_runs_old_cli(self):
+        self.exercise("DOWNLOAD")
+
+    def test_install_failure_never_updates(self):
+        self.exercise("INSTALL")
